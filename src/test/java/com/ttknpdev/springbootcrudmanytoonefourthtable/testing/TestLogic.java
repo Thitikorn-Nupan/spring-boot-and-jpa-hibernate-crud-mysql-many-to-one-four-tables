@@ -47,7 +47,7 @@ public class TestLogic {
     private SaleService saleService;
     private MarketingService marketingService;
     private ProjectService projectService;
-    @Autowired
+    // @Autowired
     private void setService() {
         programmerService = new ProgrammerDao(programmerRepository);
         saleService = new SaleDao(saleRepository);

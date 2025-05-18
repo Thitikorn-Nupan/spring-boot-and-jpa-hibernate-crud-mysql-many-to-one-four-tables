@@ -4,6 +4,7 @@ import com.ttknpdev.springbootcrudmanytoonefourthtable.entities.m_entity.Marketi
 import com.ttknpdev.springbootcrudmanytoonefourthtable.log.Logging;
 import com.ttknpdev.springbootcrudmanytoonefourthtable.repositories.m_repo.MarketingRepository;
 import com.ttknpdev.springbootcrudmanytoonefourthtable.services.MarketingService;
+import com.ttknpdev.springbootcrudmanytoonefourthtable.services.common.ServiceCommon;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,13 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class MarketingDao extends Logging implements MarketingService<Marketing> {
+public class MarketingDaoCommon extends Logging implements ServiceCommon<Marketing> {
 
-    private MarketingRepository repository;
+    private final MarketingRepository repository;
+
     @Autowired
-    public MarketingDao(MarketingRepository repository) {
+    public MarketingDaoCommon(MarketingRepository repository) {
         this.repository = repository;
     }
+
 
     @Override
     public Marketing create(Marketing obj) {
@@ -27,26 +30,28 @@ public class MarketingDao extends Logging implements MarketingService<Marketing>
     }
 
     @Override
+    public <U1, U2, U3> Marketing create(U1 key1, U2 key2, U3 key3, Marketing obj) {
+        return null;
+    }
+
+    @Override
     public List<Marketing> reads() {
-        List<Marketing> marketings = new ArrayList<>();
-        repository.findAll().forEach(marketings::add);
-        if (marketings.size() == 0) {
-            marketingDao.warn("nothing there in your table header_marketings");
-            throw new RuntimeException();
+        List<Marketing> marketings = (List<Marketing>) repository.findAll();
+        if (marketings.isEmpty()) {
+            throw new RuntimeException("nothing there in your table header_marketings");
         }
         return marketings;
     }
 
     @Override
-    public Marketing read(Long id) {
-        return repository.findById(id).orElseThrow(()->{
-            marketingDao.warn("there is no marketing id "+id);
-            throw new RuntimeException();
-        });
+    public <U> Marketing read(U key) {
+        Long id = Long.parseLong(key.toString());
+        return repository.findById(id).orElseThrow(()->  new RuntimeException("there is no marketing id "+id));
     }
 
     @Override
-    public Marketing update(Marketing obj, Long id) {
+    public <U> Marketing update(Marketing obj, U key) {
+        Long id = Long.parseLong(key.toString());
         return repository.findById(id)
                 .map(marketing -> {
                     marketing.setFullname(obj.getFullname());
@@ -54,22 +59,17 @@ public class MarketingDao extends Logging implements MarketingService<Marketing>
                     marketing.setSalary(obj.getSalary());
                     return repository.save(marketing);
                 })
-                .orElseThrow(()->{
-                    marketingDao.warn("there is no marketing id "+id+" in update() method");
-                    throw new RuntimeException();
-                });
+                .orElseThrow(RuntimeException::new);
     }
 
     @Override
-    public Map<String, Marketing> delete(Long id) {
+    public <U> Map<String, U> delete(U key) {
+        Long id = Long.parseLong(key.toString());
         Map<String,Marketing> response= new HashMap<>();
-        return repository.findById(id).map(marketing -> {
+        return (Map<String, U>) repository.findById(id).map(marketing -> {
             repository.delete(marketing);
             response.put("deleted",marketing);
             return response;
-        }).orElseThrow(()->{
-            marketingDao.warn("there is no marketing id "+id+" in delete() method Or:::: field primary key m_id can be parent key of projects table");
-            throw new RuntimeException();
-        });
+        }).orElseThrow(RuntimeException::new);
     }
 }
